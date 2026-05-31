@@ -1,0 +1,21 @@
+# localRAGcoder packaging metadata
+
+[package]
+name = "localRAGcoder"
+version = "1.0.0"
+description = "Local RAG Knowledge Graph Engine"
+authors = ["localRAGcoder Team"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/localRAGcoder/localRAGcoder"
+
+[targets]
+android = "packaging/android/app/build/outputs/apk/release/*.apk"
+ios = "packaging/ios/build/*.ipa"
+pwa = "packaging/pwa/dist/"
+windows = "packaging/windows/dist/localRAGcoder.exe"
+linux = "packaging/linux/dist/localRAGcoder"
+
+[build]
+python = ">=3.11"
+dependencies = ["kuzu>=0.7.0"]

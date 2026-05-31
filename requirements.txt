@@ -1,0 +1,15 @@
+# =============================================================================
+# localRAGcoder — Python Dependencies
+# Version: 1.0.0
+# =============================================================================
+# Core graph database (optional — JSON fallback used if not installed)
+kuzu>=0.7.0
+
+# Document ingestion
+pymupdf>=1.24.0          # PDF parsing
+python-docx>=1.1.0       # DOCX parsing
+beautifulsoup4>=4.12.0   # HTML/XML parsing
+markdown>=3.5.0          # MD-to-text conversion
+
+# Embeddings & vector search
+sentence-transformers>=2.2.0  # Embedding model inference

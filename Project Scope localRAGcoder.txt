@@ -1,0 +1,15 @@
+Project Scope UpdatesIn-ScopeMulti-Format Export Utility: A command-line and programmatic interface to export the graph database to standard .graphml (for visualization tools like Gephi) and .json formats.OpenCode IDE Optimization: Architecture built to run within the local memory and process constraints of an OpenCode workspace environment.Localized Task Runner Integration: Leveraging OpenCode tasks.json and workspace settings to trigger background graph ingestion and web scraping without requiring a heavy external daemon.Technical Specifications [ OpenCode IDE Workspace ]
+ ├── .vscode/
+ │   └── tasks.json             <── (Automates background scraping/graph ingestion)
+ ├── data/
+ │   ├── vector_store/          (Chroma/LanceDB binary workspace)
+ │   └── graph_store/           (Kùzu DB serverless folder - "The Resident")
+ └── .engine/
+     ├── cli.py                 <── (Utility tool: manages exports & network toggles)
+     └── main.py                <── (Core python-embedded orchestrator)
+1. OpenCode Integration StrategyThe engine utilizes the embedded terminal and local task runner architecture of OpenCode:Background Processing: Heavy model inference, text chunking, and graph updates are handled by a decoupled local Python process triggered via OpenCode's workspace task configurations (tasks.json).Session Isolation: All database fragments, vectors, and graph files are saved locally inside a hidden folder (e.g., .engine/data/) within your active OpenCode workspace, keeping it fully isolated per project.2. Portability & Export InterfaceThe GraphResidentManager python module provides an operational CLI layer accessible via the OpenCode terminal:bash# Export the complete graph file to a standard web-friendly format
+python -m engine.cli graph export --format json --output ./exports/project_graph.json
+
+# Export to a structured XML graph for external visualization tools
+python -m engine.cli graph export --format graphml --output ./exports/project_graph.graphml
+Use code with caution.3. Optimized Configuration Matrix (OpenCode Workspace).vscode/tasks.json: Automates incremental indexing. When you save a markdown file or update source code, a file watcher can quietly run a differential update to the Kùzu Graph database in the background.settings.json: Controls the local environment toggles, defining the active model sizes, local embedding paths, and the dynamic Network Isolation Switch (allowing or blocking the automated web scraper).Functional MilestonesWorkspace Matrix Initializer: Write a setup script that automatically builds the folder hierarchy, injects the necessary .vscode/tasks.json structure, and links the local Python virtual environment to OpenCode.Kùzu Exporter Driver: Code the translation layer that queries Kùzu DB tables (Nodes and Edges) and structures them into standard, valid GraphML (XML string format) and nested JSON.Intent-Routed Task Engine: Implement the local terminal task runner that intercepts file saves or code queries, runs the model-adaptive extraction pipeline, and pushes the relationships directly into the workspace's independent graph file.

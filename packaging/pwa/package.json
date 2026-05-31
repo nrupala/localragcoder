@@ -1,0 +1,10 @@
+{
+  "name": "localRAGcoder",
+  "version": "1.0.0",
+  "description": "PWA wrapper for localRAGcoder graph engine",
+  "scripts": {
+    "build": "cp -r ./* ../dist/ 2>/dev/null; mkdir -p dist && cp index.html manifest.json dist/",
+    "serve": "python -m http.server 8080 --directory dist"
+  },
+  "devDependencies": {}
+}

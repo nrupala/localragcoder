@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="theme-color" content="#1a1a2e"/>
+<title>localRAGcoder</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="icon" href="icon.svg" type="image/svg+xml"/>
+<script src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:false,theme:'dark',themeVariables:{primaryColor:'#533483',secondaryColor:'#16213e',tertiaryColor:'#0f3460',mainBkg:'#16213e',nodeBorder:'#e94560',clusterBkg:'#0d1117',clusterBorder:'#30363d',lineColor:'#e94560',textColor:'#c9d1d9',titleColor:'#e94560'}})</script>
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface2: #21262d;
+  --border: #30363d;
+  --text: #c9d1d9;
+  --text2: #8b949e;
+  --accent: #e94560;
+  --accent2: #533483;
+  --green: #3fb950;
+  --yellow: #d29922;
+  --radius: 8px;
+  --font: system-ui,-apple-system,sans-serif;
+  --mono: 'Cascadia Code','Fira Code','JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5}
+body{display:flex;flex-direction:column}
+a{color:var(--accent)}
+button{cursor:pointer;font-family:inherit;font-size:inherit}
+input,textarea,select{font-family:inherit;font-size:inherit;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+::placeholder{color:var(--text2)}
+
+/* ── top bar ── */
+.topbar{display:flex;align-items:center;gap:12px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);-webkit-app-region:drag}
+.topbar .logo{width:28px;height:28px}
+.topbar h1{font-size:16px;font-weight:600;color:var(--accent);-webkit-app-region:no-drag}
+.status-dot{width:10px;height:10px;border-radius:50%;background:var(--yellow);flex-shrink:0;transition:.3s;box-shadow:0 0 6px var(--yellow)}
+.status-dot.on{background:var(--green);box-shadow:0 0 6px var(--green)}
+.status-dot.off{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+.topbar .nav{display:flex;gap:4px;margin-left:auto;-webkit-app-region:no-drag}
+.topbar .nav button{padding:6px 14px;border:none;border-radius:6px;background:transparent;color:var(--text2);font-weight:500;transition:.15s}
+.topbar .nav button:hover{color:var(--text);background:var(--surface2)}
+.topbar .nav button.active{color:var(--accent);background:var(--surface2)}
+
+/* ── main content ── */
+.main{flex:1;overflow:hidden;display:flex}
+.tab{display:none;flex-direction:column;width:100%;height:100%;overflow:hidden}
+.tab.active{display:flex}
+
+/* ── Chat ── */
+.chat-header{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.chat-header select{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:4px 8px;color:var(--text);max-width:200px}
+.chat-header .spacer{flex:1}
+.chat-header button{padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2)}
+.chat-header button:hover{color:var(--text);border-color:var(--accent)}
+.messages{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:85%;padding:10px 14px;border-radius:12px;line-height:1.5;white-space:pre-wrap;overflow-wrap:break-word}
+.msg.user{background:var(--accent2);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.assistant{background:var(--surface);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px}
+.msg .sources{font-size:11px;color:var(--text2);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
+.msg .sources span{display:inline-block;margin-right:6px;padding:2px 6px;background:var(--surface2);border-radius:4px;font-size:10px;color:var(--green)}
+.msg .thinking{font-size:12px;color:var(--yellow);margin-bottom:4px;cursor:pointer}
+.msg .thinking-body{font-size:12px;color:var(--text2);padding:8px;background:var(--surface2);border-radius:4px;margin:4px 0;display:none;white-space:pre-wrap}
+.msg .thinking-body.open{display:block}
+.msg .error{color:var(--accent)}
+.inputbar{display:flex;gap:8px;padding:8px 16px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
+.inputbar textarea{flex:1;resize:none;min-height:44px;max-height:120px;padding:10px 12px;border-radius:20px;line-height:1.4}
+.inputbar button{padding:8px 20px;border:none;border-radius:20px;background:var(--accent);color:#fff;font-weight:600;white-space:nowrap}
+.inputbar button:disabled{opacity:.4}
+.rag-toggle{display:flex;align-items:center;gap:6px;padding:0 4px;color:var(--text2);font-size:12px;cursor:pointer;white-space:nowrap}
+.rag-toggle input{cursor:pointer}
+
+/* ── Documents ── */
+.doc-header{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.doc-header .spacer{flex:1}
+.doc-header label{padding:6px 14px;border-radius:6px;background:var(--accent);color:#fff;font-size:13px;cursor:pointer}
+.doc-header input[type=file]{display:none}
+.doc-list{flex:1;overflow-y:auto;padding:8px 16px}
+.doc-card{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;transition:.15s}
+.doc-card:hover{border-color:var(--accent2)}
+.doc-card .icon{font-size:20px;flex-shrink:0}
+.doc-card .info{flex:1;min-width:0}
+.doc-card .name{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doc-card .meta{font-size:11px;color:var(--text2)}
+.doc-card .chunks{font-size:11px;color:var(--text2)}
+.doc-card button{padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text2);font-size:12px}
+.doc-card button:hover{border-color:var(--accent);color:var(--accent)}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text2)}
+.empty-state .big{font-size:48px;margin-bottom:12px}
+
+/* ── Models ── */
+.models-header{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.models-header .spacer{flex:1}
+.models-header button{padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2)}
+.models-header button:hover{border-color:var(--accent);color:var(--text)}
+.models-list{flex:1;overflow-y:auto;padding:8px 16px}
+.model-card{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px}
+.model-card.active{border-color:var(--green)}
+.model-card .name{font-weight:600;flex:1}
+.model-card .size{font-size:11px;color:var(--text2)}
+.model-card .details{font-size:11px;color:var(--text2)}
+.model-card .active-badge{color:var(--green);font-size:11px;font-weight:600}
+.model-card button{padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text2);font-size:12px}
+.model-card button:hover{border-color:var(--green);color:var(--green)}
+.model-card button.select-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── Analytics ── */
+.analytics-grid{flex:1;overflow-y:auto;padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-content:start}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
+.stat-card .value{font-size:28px;font-weight:700;color:var(--accent)}
+.stat-card .label{font-size:12px;color:var(--text2);margin-top:4px}
+.stat-card .sub{font-size:11px;color:var(--text2);margin-top:8px}
+.events-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.analytics-scroll h2{font-size:15px;color:var(--text);margin-bottom:4px}
+.events-panel h3{font-size:13px;color:var(--text2);margin-bottom:8px}
+.events-panel .ev{font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+.events-panel .ev:last-child{border:none}
+.events-panel .ev-type{color:var(--accent2)}
+.events-panel .ev-time{color:var(--text2);font-size:11px}
+
+/* ── Analytics v2 ── */
+.analytics-scroll{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px}
+.ana-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.ana-section-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+.mermaid-wrap{overflow-x:auto;padding:8px 0}
+.mermaid-wrap svg{max-width:100%;height:auto}
+.ana-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.ana-chart-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ana-chart{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px;min-height:240px}
+.ana-chart .chart-placeholder{display:flex;align-items:center;justify-content:center;height:220px;color:var(--text2);font-size:13px}
+@media(max-width:640px){.ana-chart-row{grid-template-columns:1fr}}
+
+/* ── status toast ── */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 20px;border-radius:20px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:13px;z-index:999;opacity:0;transition:.3s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* ── scrollbar ── */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text2)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <img class="logo" src="icon.svg" alt=""/>
+  <h1>localRAGcoder</h1>
+  <span class="status-dot" id="status-dot" title="Connecting..."></span>
+  <div class="nav">
+    <button class="active" data-tab="chat">Chat</button>
+    <button data-tab="docs">Documents</button>
+    <button data-tab="models">Models</button>
+    <button data-tab="analytics">Analytics</button>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ─── Chat Tab ─── -->
+<div id="tab-chat" class="tab active">
+  <div class="chat-header">
+    <select id="session-select"><option value="">Loading sessions...</option></select>
+    <span class="spacer"></span>
+    <button onclick="newSession()">+ New</button>
+  </div>
+  <div class="messages" id="message-list">
+    <div class="empty-state"><div class="big">💬</div><p>Start a conversation or upload a document to begin RAG.</p></div>
+  </div>
+  <div class="inputbar">
+    <label class="rag-toggle">
+      <input type="checkbox" id="rag-toggle" checked/> RAG
+    </label>
+    <textarea id="chat-input" placeholder="Ask a question..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"></textarea>
+    <button id="send-btn" onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<!-- ─── Documents Tab ─── -->
+<div id="tab-docs" class="tab">
+  <div class="doc-header">
+    <h2>Documents</h2>
+    <span class="spacer"></span>
+    <label for="file-upload">+ Upload</label>
+    <input type="file" id="file-upload" multiple onchange="uploadFiles(this.files)"/>
+  </div>
+  <div class="doc-list" id="doc-list">
+    <div class="empty-state"><div class="big">📄</div><p>No documents yet. Upload PDFs, Word files, or text documents.</p></div>
+  </div>
+</div>
+
+<!-- ─── Models Tab ─── -->
+<div id="tab-models" class="tab">
+  <div class="models-header">
+    <h2>Models</h2>
+    <span class="spacer"></span>
+    <button onclick="loadModels()">⟳ Refresh</button>
+    <button onclick="showPullModel()">+ Pull</button>
+  </div>
+  <div class="models-list" id="models-list">
+    <div class="empty-state"><div class="big">🤖</div><p>Connect to Ollama to see available models.</p></div>
+  </div>
+</div>
+
+<!-- ─── Analytics Tab ─── -->
+<div id="tab-analytics" class="tab">
+  <div class="analytics-scroll" id="analytics-scroll">
+    <!-- Mermaid Pipeline -->
+    <div class="ana-section">
+      <div class="ana-section-title">Pipeline Flow</div>
+      <div class="mermaid-wrap" id="mermaid-wrap"><pre class="mermaid" id="pipeline-diagram">
+flowchart LR
+  subgraph Input["📄 Input"]
+    A[Upload Document]
+  end
+  subgraph Process["⚙️ Process"]
+    B[Extract Text]
+    C[Chunk]
+    D[Embed]
+  end
+  subgraph Store["💾 Store"]
+    E[(Vector DB)]
+    F[(SQLite)]
+  end
+  subgraph Query["🔍 Query"]
+    G[User Question]
+    H[Vector Search]
+    I[Build Context]
+  end
+  subgraph Generate["🤖 Generate"]
+    J[LLM]
+    K[Answer + Sources]
+  end
+  A --> B --> C --> D
+  D --> E
+  C --> F
+  G --> H --> I --> J --> K
+  E --> H
+  F --> I
+      </pre></div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="ana-grid" id="ana-cards"></div>
+
+    <!-- Charts row -->
+    <div class="ana-chart-row">
+      <div class="ana-chart" id="chart-latency"><div class="chart-placeholder">Latency over time</div></div>
+      <div class="ana-chart" id="chart-models"><div class="chart-placeholder">Model benchmarks</div></div>
+    </div>
+    <div class="ana-chart-row">
+      <div class="ana-chart" id="chart-events"><div class="chart-placeholder">Events over time</div></div>
+      <div class="ana-chart" id="chart-ratings"><div class="chart-placeholder">Rating distribution</div></div>
+    </div>
+
+    <!-- Recent Events -->
+    <div class="events-panel" id="events-panel">
+      <h3>Recent Events</h3>
+      <div id="events-list">Loading...</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api';
+let currentSession = null;
+let streaming = false;
+
+// ── Tab navigation ──
+document.querySelectorAll('.nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'docs') loadDocuments();
+    if (btn.dataset.tab === 'models') loadModels();
+    if (btn.dataset.tab === 'analytics') loadAnalytics();
+  });
+});
+
+// ── Toast ──
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── API helpers ──
+async function api(method, path, body) {
+  const opts = { method, headers: {} };
+  if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  const r = await fetch(API + path, opts);
+  if (!r.ok) { const t = await r.text(); throw new Error(t.slice(0, 200)); }
+  const ct = r.headers.get('content-type') || '';
+  if (ct.includes('json')) return r.json();
+  return r.text();
+}
+
+// ══════════════════════════════════════════════
+//  CHAT
+// ══════════════════════════════════════════════
+
+async function loadSessions() {
+  const sel = document.getElementById('session-select');
+  try {
+    const list = await api('GET', '/chats');
+    sel.innerHTML = '';
+    if (!list.length) {
+      sel.innerHTML = '<option value="">No sessions</option>';
+      const s = await api('POST', '/chats', { title: 'New Chat' });
+      sel.innerHTML = `<option value="${s.session_id}">${s.title}</option>`;
+      sel.value = s.session_id;
+      currentSession = s.session_id;
+      return;
+    }
+    list.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.session_id;
+      opt.textContent = s.title + (s.message_count ? ` (${s.message_count})` : '');
+      sel.appendChild(opt);
+    });
+    if (!currentSession) { sel.value = list[0].session_id; currentSession = list[0].session_id; }
+    else sel.value = currentSession;
+    loadMessages();
+  } catch(e) { toast('Failed to load sessions: ' + e.message); }
+}
+
+document.getElementById('session-select').addEventListener('change', e => {
+  currentSession = e.target.value;
+  if (currentSession) loadMessages();
+});
+
+async function newSession() {
+  try {
+    const s = await api('POST', '/chats', { title: 'New Chat' });
+    currentSession = s.session_id;
+    await loadSessions();
+  } catch(e) { toast('Error: ' + e.message); }
+}
+
+async function loadMessages() {
+  const el = document.getElementById('message-list');
+  if (!currentSession) { el.innerHTML = '<div class="empty-state"><div class="big">💬</div><p>Start a new chat.</p></div>'; return; }
+  try {
+    const msgs = await api('GET', '/chats/' + encodeURIComponent(currentSession) + '/messages');
+    el.innerHTML = '';
+    if (!msgs.length) { el.innerHTML = '<div class="empty-state"><div class="big">💬</div><p>Send a message to begin.</p></div>'; return; }
+    msgs.forEach(m => appendMessage(m.role, m.content, m.sources ? JSON.parse(m.sources) : null));
+    el.scrollTop = el.scrollHeight;
+  } catch(e) { toast('Error loading messages: ' + e.message); }
+}
+
+function appendMessage(role, content, sources) {
+  const el = document.getElementById('message-list');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+
+  // Check for thinking tags in reasoning models (qwen3, deepseek-r1)
+  let displayContent = content;
+  let thinkingHtml = '';
+  const thinkMatch = content.match(/<thinking>([\s\S]*?)<\/thinking>/);
+  if (thinkMatch) {
+    const thinkingText = thinkMatch[1].trim();
+    displayContent = content.replace(/<thinking>[\s\S]*?<\/thinking>/, '').trim();
+    thinkingHtml = `<div class="thinking" onclick="this.nextElementSibling.classList.toggle('open')">🧠 ${thinkingText.slice(0, 60)}...</div><div class="thinking-body">${escapeHtml(thinkingText)}</div>`;
+  }
+
+  div.innerHTML = thinkingHtml + escapeHtml(displayContent);
+  if (sources && sources.length) {
+    const srcDiv = document.createElement('div');
+    srcDiv.className = 'sources';
+    srcDiv.innerHTML = '📎 ' + sources.map(s => `<span>${escapeHtml(s)}</span>`).join('');
+    div.appendChild(srcDiv);
+  }
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text || streaming) return;
+  if (!currentSession) { toast('Create a session first'); return; }
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('send-btn').disabled = true;
+  streaming = true;
+
+  // Remove empty state
+  const el = document.getElementById('message-list');
+  const empty = el.querySelector('.empty-state');
+  if (empty) empty.remove();
+
+  appendMessage('user', text, null);
+  const useRag = document.getElementById('rag-toggle').checked;
+
+  // Show thinking indicator
+  const thinkDiv = document.createElement('div');
+  thinkDiv.className = 'msg assistant';
+  thinkDiv.id = 'stream-msg';
+  thinkDiv.textContent = '...';
+  el.appendChild(thinkDiv);
+
+  try {
+    const r = await fetch(API + '/chats/' + encodeURIComponent(currentSession) + '/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, use_rag: useRag }),
+    });
+    if (!r.ok) throw new Error(await r.text());
+
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.trim() || !line.startsWith('data: ')) continue;
+        const data = JSON.parse(line.slice(6));
+        if (data.type === 'chunk') {
+          const msgEl = document.getElementById('stream-msg');
+          if (msgEl) msgEl.textContent += data.content;
+        } else if (data.type === 'done') {
+          const msgEl = document.getElementById('stream-msg');
+          if (msgEl) {
+            msgEl.id = '';
+            msgEl.textContent = data.content;
+            if (data.sources && data.sources.length) {
+              const srcDiv = document.createElement('div');
+              srcDiv.className = 'sources';
+              srcDiv.innerHTML = '📎 ' + data.sources.map(s => `<span>${escapeHtml(s)}</span>`).join('');
+              msgEl.appendChild(srcDiv);
+            }
+            // Check for thinking
+            const thinkMatch = data.content.match(/<thinking>([\s\S]*?)<\/thinking>/);
+            if (thinkMatch) {
+              const t = thinkMatch[1].trim();
+              const display = data.content.replace(/<thinking>[\s\S]*?<\/thinking>/, '').trim();
+              msgEl.innerHTML = `<div class="thinking" onclick="this.nextElementSibling.classList.toggle('open')">🧠 ${t.slice(0,60)}...</div><div class="thinking-body">${escapeHtml(t)}</div>${escapeHtml(display)}`;
+              if (data.sources && data.sources.length) {
+                const srcDiv = document.createElement('div');
+                srcDiv.className = 'sources';
+                srcDiv.innerHTML = '📎 ' + data.sources.map(s => `<span>${escapeHtml(s)}</span>`).join('');
+                msgEl.appendChild(srcDiv);
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch(e) {
+    const msgEl = document.getElementById('stream-msg');
+    if (msgEl) { msgEl.id = ''; msgEl.innerHTML = `<span class="error">Error: ${escapeHtml(e.message)}</span>`; }
+  }
+
+  document.getElementById('send-btn').disabled = false;
+  streaming = false;
+  loadSessions(); // update message counts
+}
+
+// ══════════════════════════════════════════════
+//  DOCUMENTS
+// ══════════════════════════════════════════════
+
+async function uploadFiles(files) {
+  if (!files.length) return;
+  const formData = new FormData();
+  for (const f of files) formData.append('files', f);
+  try {
+    const r = await fetch(API + '/documents/upload', { method: 'POST', body: formData });
+    if (!r.ok) throw new Error(await r.text());
+    const result = await r.json();
+    toast(`Uploaded ${result.length} document(s)`);
+    loadDocuments();
+  } catch(e) { toast('Upload failed: ' + e.message); }
+}
+
+async function loadDocuments() {
+  const el = document.getElementById('doc-list');
+  try {
+    const docs = await api('GET', '/documents');
+    el.innerHTML = '';
+    if (!docs.length) { el.innerHTML = '<div class="empty-state"><div class="big">📄</div><p>No documents yet. Upload PDFs, Word files, or text documents.</p></div>'; return; }
+    docs.forEach(d => {
+      const card = document.createElement('div');
+      card.className = 'doc-card';
+      const iconMap = { pdf: '📕', docx: '📘', doc: '📘', txt: '📄', md: '📝', html: '🌐', json: '📋', csv: '📊', odt: '📃', rtf: '📃' };
+      card.innerHTML = `
+        <div class="icon">${iconMap[d.filetype] || '📄'}</div>
+        <div class="info">
+          <div class="name">${escapeHtml(d.title || d.filename)}</div>
+          <div class="meta">${escapeHtml(d.filename)} · ${(d.size_bytes / 1024).toFixed(1)} KB</div>
+          <div class="chunks">${d.chunk_count || 0} chunks · ${d.filetype}</div>
+        </div>
+        <button onclick="deleteDoc('${d.id}')">Delete</button>
+      `;
+      el.appendChild(card);
+    });
+  } catch(e) { toast('Failed to load documents: ' + e.message); }
+}
+
+async function deleteDoc(id) {
+  if (!confirm('Delete this document and its chunks?')) return;
+  try {
+    await api('DELETE', '/documents/' + encodeURIComponent(id));
+    toast('Document deleted');
+    loadDocuments();
+  } catch(e) { toast('Delete failed: ' + e.message); }
+}
+
+// ══════════════════════════════════════════════
+//  MODELS
+// ══════════════════════════════════════════════
+
+async function loadModels() {
+  const el = document.getElementById('models-list');
+  try {
+    const models = await api('GET', '/models');
+    el.innerHTML = '';
+    if (!models.length) { el.innerHTML = '<div class="empty-state"><div class="big">🤖</div><p>No Ollama models found. Make sure Ollama is running.</p></div>'; return; }
+    models.forEach(m => {
+      const card = document.createElement('div');
+      card.className = 'model-card' + (m.active ? ' active' : '');
+      const size = (m.size / 1e9).toFixed(1) + ' GB';
+      const fam = m.details?.family || '';
+      const param = m.details?.parameter_size || '';
+      card.innerHTML = `
+        <div class="name">${escapeHtml(m.name)}</div>
+        <div class="size">${size}</div>
+        <div class="details">${fam} ${param}</div>
+        ${m.active ? '<span class="active-badge">● Active</span>' : '<button class="select-btn" onclick="selectModel(\'' + escapeHtml(m.name) + '\')">Select</button>'}
+      `;
+      el.appendChild(card);
+    });
+  } catch(e) { toast('Failed to load models: ' + e.message); }
+}
+
+async function selectModel(name) {
+  try {
+    await api('POST', '/models/select', { name });
+    toast('Active model: ' + name);
+    loadModels();
+  } catch(e) { toast('Failed to select model: ' + e.message); }
+}
+
+function showPullModel() {
+  const name = prompt('Enter model name to pull (e.g. llama3.2:3b):');
+  if (name) pullModel(name);
+}
+
+async function pullModel(name) {
+  toast('Pulling ' + name + '... (this may take minutes)');
+  try {
+    await api('POST', '/models/pull', { name });
+    toast('Model pulled: ' + name);
+    loadModels();
+  } catch(e) { toast('Pull failed: ' + e.message); }
+}
+
+// ══════════════════════════════════════════════
+//  ANALYTICS  (Plotly + Mermaid)
+// ══════════════════════════════════════════════
+
+async function loadAnalytics() {
+  try {
+    const [s, b, events] = await Promise.all([
+      api('GET', '/analytics/summary'),
+      api('GET', '/analytics/benchmark'),
+      api('GET', '/analytics/events?limit=20'),
+    ]);
+
+    // ── Render Mermaid pipeline ──
+    const mermaidEl = document.getElementById('pipeline-diagram');
+    if (mermaidEl) {
+      try {
+        mermaidEl.removeAttribute('data-processed');
+        await mermaid.run({ nodes: [mermaidEl] });
+      } catch(e) { console.warn('Mermaid render error:', e); }
+    }
+
+    // ── Stat cards ──
+    const cards = [
+      { value: s.total_documents || 0, label: 'Documents', sub: s.total_document_chunks ? s.total_document_chunks + ' chunks' : '' },
+      { value: s.total_chat_sessions || 0, label: 'Chat Sessions', sub: (s.total_messages || 0) + ' messages' },
+      { value: s.total_rag_queries || 0, label: 'RAG Queries', sub: '' },
+      { value: (s.avg_latency_ms || 0).toFixed(0) + 'ms', label: 'Avg Latency', sub: '' },
+      { value: (s.total_events || 0), label: 'Total Events', sub: '' },
+    ];
+    const cardsContainer = document.getElementById('ana-cards');
+    cardsContainer.innerHTML = cards.map(c =>
+      `<div class="stat-card"><div class="value">${c.value}</div><div class="label">${c.label}</div>${c.sub ? `<div class="sub">${c.sub}</div>` : ''}</div>`
+    ).join('');
+
+    const darkLayout = {
+      paper_bgcolor: '#161b22', plot_bgcolor: '#161b22',
+      font: { color: '#c9d1d9', size: 11 },
+      xaxis: { gridcolor: '#30363d', zerolinecolor: '#30363d' },
+      yaxis: { gridcolor: '#30363d', zerolinecolor: '#30363d' },
+      margin: { l: 50, r: 20, t: 10, b: 40 },
+      autosize: true,
+    };
+    const accent = '#e94560';
+    const accent2 = '#533483';
+
+    // ── Latency over time (Plotly) ──
+    const latData = b.latency_over_time || [];
+    if (latData.length) {
+      const trace = {
+        x: latData.map(d => new Date(d.created_at * 1000)),
+        y: latData.map(d => d.latency_ms),
+        type: 'scatter', mode: 'lines+markers',
+        line: { color: accent, width: 2 },
+        marker: { color: accent, size: 4 },
+        name: 'latency ms',
+      };
+      Plotly.newPlot('chart-latency', [trace], {
+        ...darkLayout, yaxis: { ...darkLayout.yaxis, title: 'ms' },
+        height: 240,
+      });
+    } else {
+      document.getElementById('chart-latency').innerHTML = '<div class="chart-placeholder">No latency data yet</div>';
+    }
+
+    // ── Model benchmarks bar chart ──
+    const models = b.per_model || [];
+    if (models.length) {
+      const trace = {
+        x: models.map(m => m.model_id),
+        y: models.map(m => m.avg_latency_ms),
+        type: 'bar',
+        marker: { color: models.map((_, i) => i === 0 ? accent : accent2) },
+        text: models.map(m => m.query_count + ' queries'),
+        textposition: 'outside',
+      };
+      Plotly.newPlot('chart-models', [trace], {
+        ...darkLayout, yaxis: { ...darkLayout.yaxis, title: 'avg ms' },
+        height: 240,
+      });
+    } else {
+      document.getElementById('chart-models').innerHTML = '<div class="chart-placeholder">No model data yet</div>';
+    }
+
+    // ── Events over time (bar) ──
+    const evTime = b.events_over_time || [];
+    if (evTime.length) {
+      const days = [...new Set(evTime.map(e => e.day))].sort();
+      const types = [...new Set(evTime.map(e => e.event_type))];
+      const traces = types.map((t, i) => ({
+        x: days,
+        y: days.map(d => {
+          const match = evTime.find(e => e.day === d && e.event_type === t);
+          return match ? match.cnt : 0;
+        }),
+        type: 'bar', name: t,
+        marker: { color: i % 2 === 0 ? accent : accent2 },
+      }));
+      Plotly.newPlot('chart-events', traces, {
+        ...darkLayout, barmode: 'stack',
+        height: 240,
+      });
+    } else {
+      document.getElementById('chart-events').innerHTML = '<div class="chart-placeholder">No event timeline yet</div>';
+    }
+
+    // ── Rating distribution (pie) ──
+    const ratings = s.rating_distribution || {};
+    const ratingKeys = Object.keys(ratings);
+    if (ratingKeys.length) {
+      const trace = {
+        labels: ratingKeys.map(k => k + ' ★'),
+        values: ratingKeys.map(k => ratings[k]),
+        type: 'pie',
+        marker: { colors: ['#e94560','#d63384','#533483','#3fb950','#d29922'] },
+        textinfo: 'label+value',
+      };
+      Plotly.newPlot('chart-ratings', [trace], {
+        ...darkLayout, showlegend: false,
+        height: 240,
+      });
+    } else {
+      document.getElementById('chart-ratings').innerHTML = '<div class="chart-placeholder">No ratings yet</div>';
+    }
+
+    // ── Recent events ──
+    const evList = document.getElementById('events-list');
+    if (events.length) {
+      evList.innerHTML = events.map(e => {
+        const d = new Date(e.created_at * 1000);
+        return `<div class="ev"><span class="ev-type">${escapeHtml(e.event_type)}</span><span class="ev-time">${d.toLocaleString()}</span></div>`;
+      }).join('');
+    } else {
+      evList.innerHTML = '<div class="ev" style="color:var(--text2)">No events recorded yet</div>';
+    }
+  } catch(e) {
+    const scroll = document.getElementById('analytics-scroll');
+    if (scroll) scroll.innerHTML = `<div class="empty-state"><div class="big">📊</div><p>Error: ${escapeHtml(e.message)}</p></div>`;
+  }
+}
+
+// ══════════════════════════════════════════════
+//  HEALTH + RECONNECTION
+// ══════════════════════════════════════════════
+
+let _healthRetries = 0;
+const _maxHealthRetries = 10;
+
+function updateStatusDot(ok) {
+  const dot = document.getElementById('status-dot');
+  if (!dot) return;
+  dot.className = 'status-dot' + (ok ? ' on' : ' off');
+  dot.title = ok ? 'Connected' : 'Disconnected';
+}
+
+async function checkHealth() {
+  try {
+    const h = await api('GET', '/health');
+    updateStatusDot(true);
+    _healthRetries = 0;
+    return h;
+  } catch(e) {
+    updateStatusDot(false);
+    throw e;
+  }
+}
+
+async function waitForServer(retries) {
+  retries = retries || _maxHealthRetries;
+  for (let i = 0; i < retries; i++) {
+    try {
+      await checkHealth();
+      return true;
+    } catch(e) {
+      const delay = Math.min(100 * Math.pow(2, i), 10000);
+      console.log(`Server unreachable, retry ${i+1}/${retries} in ${delay}ms`);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+  return false;
+}
+
+function startPeriodicHealthCheck() {
+  setInterval(async () => {
+    try { await checkHealth(); } catch(e) { /* dot stays red */ }
+  }, 15000);
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+
+// Auto-resize textarea
+document.getElementById('chat-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+// Connect with exponential backoff, then load data
+(async function init() {
+  const connected = await waitForServer();
+  if (!connected) {
+    toast('Cannot reach server. Is the engine running?');
+    updateStatusDot(false);
+    return;
+  }
+  startPeriodicHealthCheck();
+  loadSessions();
+})();
+</script>
+</body>
+</html>

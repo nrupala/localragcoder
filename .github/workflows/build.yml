@@ -1,0 +1,143 @@
+# localRAGcoder — Cross-Platform Build & Test Pipeline
+#
+# Triggers:
+#   - Push / PR to main → run tests
+#   - Tag v* → build APK (Android), PWA, Windows exe, Linux AppImage
+
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # 1. Test — all platforms
+  # ─────────────────────────────────────────────────────────────
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Unit tests
+        run: python run_tests.py --unit
+
+  # ─────────────────────────────────────────────────────────────
+  # 2. Android APK  (via Chaquopy + Gradle)
+  # ─────────────────────────────────────────────────────────────
+  android-apk:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build APK
+        run: |
+          cd packaging/android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: localRAGcoder-android
+          path: packaging/android/app/build/outputs/apk/release/*.apk
+
+  # ─────────────────────────────────────────────────────────────
+  # 3. PWA (Progressive Web App)
+  # ─────────────────────────────────────────────────────────────
+  pwa:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build PWA
+        run: |
+          cd packaging/pwa
+          npm install
+          npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: packaging/pwa/dist
+
+  # ─────────────────────────────────────────────────────────────
+  # 4. Windows installer (PyInstaller + NSIS)
+  # ─────────────────────────────────────────────────────────────
+  windows:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build EXE
+        run: |
+          pip install pyinstaller
+          cd packaging/windows
+          pyinstaller --onefile --name localRAGcoder ../../run_tests.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: localRAGcoder-windows
+          path: packaging/windows/dist/localRAGcoder.exe
+
+  # ─────────────────────────────────────────────────────────────
+  # 5. Linux AppImage
+  # ─────────────────────────────────────────────────────────────
+  linux:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build AppImage
+        run: |
+          pip install pyinstaller
+          cd packaging/linux
+          pyinstaller --onefile --name localRAGcoder ../../run_tests.py
+          # AppImage tooling would bundle further here
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: localRAGcoder-linux
+          path: packaging/linux/dist/localRAGcoder
+
+  # ─────────────────────────────────────────────────────────────
+  # 6. Release — gather all artifacts
+  # ─────────────────────────────────────────────────────────────
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [android-apk, pwa, windows, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            localRAGcoder-android/*.apk
+            localRAGcoder-windows/*.exe
+            localRAGcoder-linux/*
+          generate_release_notes: true

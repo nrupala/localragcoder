@@ -1,0 +1,35 @@
+# localRAGcoder — .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.spec
+
+# Data (runtime)
+data/vector_store/*
+!data/vector_store/.gitkeep
+data/graph_store/*
+!data/graph_store/.gitkeep
+
+# Exports (generated)
+exports/*
+!exports/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+*.swp
+*.swo
+
+# Packaging builds
+packaging/android/.gradle/
+packaging/android/app/build/
+packaging/ios/build/
+packaging/*/dist/
+packaging/*/node_modules/
