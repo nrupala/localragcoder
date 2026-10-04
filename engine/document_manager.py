@@ -147,14 +147,14 @@ class DocumentManager:
             doc_id = meta.get("doc_id", "")
             # Pull text from SQLite
             ch = self.db.get_chunk(chunk_id)
-            doc = self.db.get_document(doc_id) if doc_id else None
+            doc = self.get_document(doc_id) if doc_id else None
             enriched.append({
                 "chunk_id": chunk_id,
                 "doc_id": doc_id,
                 "index": meta.get("index", -1),
                 "filename": meta.get("filename", ""),
                 "score": r["score"],
-                "text": ch["text"] if ch else "",
+                "text": ch["content"] if ch else "",
                 "document_title": doc["title"] if doc else "",
             })
         return enriched
