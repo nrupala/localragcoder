@@ -116,7 +116,8 @@ def test_stats():
     s = db.stats()
     assert s["node_count"] == 1
     assert s["edge_count"] == 0
-    assert s["engine"] == "json_fallback"
+    # The engine name reflects whichever backend is actually in use.
+    assert s["engine"] == ("kuzu" if KUZU_AVAILABLE else "json_fallback")
     db.close()
 
 
