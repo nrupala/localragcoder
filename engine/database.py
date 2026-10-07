@@ -58,8 +58,17 @@ class GraphDatabase:
     # ── internal initializers ─────────────────────────────────────
 
     def _init_kuzu(self) -> None:
-        """Initialize a Kùzu in-process database and create schema."""
-        self._db = kuzu.Database(str(self.db_path))
+        """Initialize a Kùzu in-process database and create schema.
+
+        Kùzu >= 0.11 uses single-file storage: the Database path must be a
+        file, not an existing directory ("Database path cannot be a
+        directory"). Older versions used directory storage. Point Kùzu at
+        a fixed storage file inside the database directory so this works
+        on every supported Kùzu version (new versions create the file,
+        old versions create the directory).
+        """
+        kuzu_path = self.db_path / "kuzu.db"
+        self._db = kuzu.Database(str(kuzu_path))
         self._conn = kuzu.Connection(self._db)
         self._conn.execute(
             "CREATE NODE TABLE IF NOT EXISTS Node "
@@ -111,9 +120,11 @@ class GraphDatabase:
         """
         try:
             if KUZU_AVAILABLE:
+                # Kùzu speaks Cypher, not SQL: MERGE on the primary-key
+                # property gives upsert semantics (create or update).
                 self._conn.execute(
-                    "MERGE INTO Node (id, label, properties) "
-                    "VALUES ($id, $label, $props)",
+                    "MERGE (n:Node {id: $id}) "
+                    "SET n.label = $label, n.properties = $props",
                     parameters={
                         "id": node.id,
                         "label": node.label,
@@ -147,11 +158,16 @@ class GraphDatabase:
         """
         try:
             if KUZU_AVAILABLE:
+                # Cypher upsert: bind both endpoints, MERGE the
+                # relationship on its id, then set the payload.
                 self._conn.execute(
-                    "MERGE INTO Edge (id, label, properties) "
-                    "VALUES ($id, $label, $props)",
+                    "MATCH (s:Node {id: $src}), (t:Node {id: $dst}) "
+                    "MERGE (s)-[e:Edge {id: $id}]->(t) "
+                    "SET e.label = $label, e.properties = $props",
                     parameters={
                         "id": edge.id,
+                        "src": edge.source,
+                        "dst": edge.target,
                         "label": edge.label,
                         "props": json.dumps(edge.properties),
                     },
@@ -239,7 +255,9 @@ class GraphDatabase:
     def clear(self) -> None:
         """Remove all nodes and edges from the database."""
         if KUZU_AVAILABLE:
-            self._conn.execute("MATCH (n:Node) DELETE n")
+            # DETACH DELETE: plain DELETE refuses nodes that still have
+            # relationships; detach removes the edges first.
+            self._conn.execute("MATCH (n:Node) DETACH DELETE n")
         else:
             self._save_fallback(GraphDocument())
         logger.info("Graph database cleared")

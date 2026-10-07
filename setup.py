@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Setup script for localRAGcoder — pip-installable package.
 
-Version: 1.0.0
+Version: 1.0.1
 """
 
 from setuptools import setup, find_packages
 
 setup(
     name="localRAGcoder",
-    version="1.0.0",
+    version="1.0.1",
     description="Local RAG Knowledge Graph Engine for OpenCode IDE",
     long_description=open("README.md").read() if __import__("os").path.exists("README.md") else "",
     long_description_content_type="text/markdown",
