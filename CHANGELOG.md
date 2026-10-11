@@ -6,6 +6,9 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- Licensed under AGPL-3.0 (portfolio license policy, owner decision 2026-10-11); canonical license text added as `LICENSE`.
+
+
 ### Added
 - Portfolio certification rollout: CONTRIBUTING.md (PR-flow discipline),
   CHANGELOG.md (this file), NOTICE.md (attribution).
