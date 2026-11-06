@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 2351485 ALBERTA INC.
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 # localRAGcoder — Deploy locally from source
 #
 # Installs the engine as a pip-installable package and runs tests.
