@@ -1,5 +1,7 @@
 # localRAGcoder
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16399/badge)](https://www.bestpractices.dev/en/projects/16399)
+
 **Local RAG — chat with your documents, privately.**
 
 A fully local Retrieval-Augmented Generation engine with a PWA frontend. All data (documents, chats, analytics) persists in SQLite. Runs on Windows, Linux, macOS, and deployable to Android/iOS via Chaquopy.
