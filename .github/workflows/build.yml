@@ -150,8 +150,20 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [android-apk, pwa, windows, linux]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      # Build-provenance attestation (SLSA L2 via Sigstore) for release artifacts
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/download-artifact@v4
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            localRAGcoder-android/*.apk
+            localRAGcoder-windows/*.exe
+            localRAGcoder-linux/*
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
