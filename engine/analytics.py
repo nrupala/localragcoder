@@ -12,7 +12,6 @@ import json
 import logging
 import time
 import uuid
-from typing import Any, Optional
 
 from . import db
 

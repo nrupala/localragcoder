@@ -9,11 +9,10 @@ with at least one chat-compatible model loaded.
 Version: 1.0.0
 """
 
-import sys
 import json
-import time
-import tempfile
 import shutil
+import sys
+import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -45,7 +44,6 @@ def teardown_module():
 def _ollama_request(method: str, endpoint: str, body: dict = None,
                     timeout: int = 300):
     """Make a raw HTTP request to the Ollama API."""
-    import http.client
     import urllib.request
 
     data = json.dumps(body).encode() if body else None

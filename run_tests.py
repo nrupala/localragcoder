@@ -25,8 +25,8 @@ TEST_MODULES = [
 
 def main():
     args = set(sys.argv[1:])
-    run_unit = "--unit" in args or not ("--integration" in args)
-    run_int = "--integration" in args or not ("--unit" in args)
+    run_unit = "--unit" in args or "--integration" not in args
+    run_int = "--integration" in args or "--unit" not in args
 
     passed = 0
     failed = 0

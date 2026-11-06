@@ -8,9 +8,9 @@ Version: 1.0.0
 Module: engine (package root)
 """
 
-from .main import GraphResidentEngine
 from .database import GraphDatabase
 from .graph_exporter import GraphExporter
+from .main import GraphResidentEngine
 
 __all__ = ["GraphResidentEngine", "GraphDatabase", "GraphExporter"]
 __version__ = "1.0.0"

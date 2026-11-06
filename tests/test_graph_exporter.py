@@ -3,17 +3,16 @@
 Version: 1.0.0
 """
 
-import sys
 import json
-import tempfile
 import shutil
+import sys
+import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from engine.models import GraphNode, GraphEdge, GraphDocument
 from engine.graph_exporter import GraphExporter
-
+from engine.models import GraphDocument, GraphEdge, GraphNode
 
 TMPDIR = Path(tempfile.mkdtemp(prefix="lrc_test_export_"))
 

@@ -19,9 +19,10 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import Any, Iterator, Optional
-from urllib.request import Request, urlopen
+from collections.abc import Iterator
+from typing import Any
 from urllib.error import URLError
+from urllib.request import Request, urlopen
 
 logger = logging.getLogger(__name__)
 

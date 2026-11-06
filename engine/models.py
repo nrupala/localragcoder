@@ -8,7 +8,7 @@ store (Kùzu or JSON fallback).
 Version: 1.0.0
 """
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
 

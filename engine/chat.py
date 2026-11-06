@@ -13,7 +13,6 @@ import json
 import logging
 import time
 import uuid
-from typing import Any, Optional
 
 from . import db
 from . import models_manager as mm
@@ -140,7 +139,7 @@ class ChatManager:
             return {"error": f"Session not found: {session_id}"}
 
         # Save user message
-        user_msg = session.add_message("user", text)
+        session.add_message("user", text)
         self.db.add_message_simple(session_id, "user", text)
 
         # Build conversation history
@@ -168,7 +167,7 @@ class ChatManager:
             sources = []
 
         # Save assistant message
-        assistant_msg = session.add_message("assistant", answer, sources or None)
+        session.add_message("assistant", answer, sources or None)
         self.db.add_message_simple(session_id, "assistant", answer,
                                    json.dumps(sources) if sources else None)
 
@@ -195,10 +194,6 @@ class ChatManager:
         # Save user message
         session.add_message("user", text)
         self.db.add_message_simple(session_id, "user", text)
-
-        # Build history
-        history = [{"role": m["role"], "content": m.get("content", "")}
-                   for m in session.messages[:-1]]
 
         if use_rag:
             chunks = self.rag.retrieve(text)

@@ -16,10 +16,7 @@ import sqlite3
 import threading
 import time
 import uuid
-from contextlib import contextmanager
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Generator, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -190,13 +187,6 @@ class LocalDB:
             (status, chunk_count, doc_id),
         )
         conn.commit()
-
-    def delete_document(self, doc_id: str) -> None:
-        conn = _get_conn(self.db_path)
-        conn.execute("DELETE FROM chunks WHERE doc_id=?", (doc_id,))
-        conn.execute("DELETE FROM documents WHERE id=?", (doc_id,))
-        conn.commit()
-        logger.info("Document deleted: %s", doc_id)
 
     # ── chunks ─────────────────────────────────────────────────
 

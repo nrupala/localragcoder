@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 from .database import GraphDatabase
 from .graph_exporter import GraphExporter
@@ -45,7 +44,7 @@ class GraphResidentEngine:
     def __init__(
         self,
         workspace_root: str | Path,
-        db_path: Optional[str | Path] = None,
+        db_path: str | Path | None = None,
         network_enabled: bool = True,
     ):
         self.workspace_root = Path(workspace_root).resolve()
@@ -66,7 +65,7 @@ class GraphResidentEngine:
         source_id: str,
         content: str,
         label: str = "document",
-        properties: Optional[dict] = None,
+        properties: dict | None = None,
     ) -> bool:
         """Ingest a text fragment as a node in the graph.
 
@@ -96,7 +95,7 @@ class GraphResidentEngine:
         source: str,
         target: str,
         label: str = "references",
-        properties: Optional[dict] = None,
+        properties: dict | None = None,
     ) -> bool:
         """Create a directed relationship between two nodes.
 

@@ -1,0 +1,11 @@
+# localRAGcoder lint gate (wired into CI 2026-11-06, remediation leg).
+# Explicit rule set so the gate means the same thing on every machine:
+#   E4/E7/E9  pycodestyle errors, F pyflakes, I import order, UP pyupgrade.
+# Baseline, stated plainly: BLE (blind-except) and S (bandit-style) are
+# NOT enabled - the engine's server handlers deliberately catch broad
+# exceptions and keep serving (measured 2026-11-06: 17 BLE001 + 5 S110
+# sites). Enabling them is a maintainer decision, not a silent default.
+target-version = "py311"
+
+[lint]
+select = ["E4", "E7", "E9", "F", "I", "UP"]

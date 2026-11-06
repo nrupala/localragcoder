@@ -16,7 +16,6 @@ import argparse
 import json
 import logging
 import sys
-from pathlib import Path
 
 from .graph_exporter import GraphExporter
 from .main import GraphResidentEngine

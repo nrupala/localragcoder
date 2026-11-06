@@ -47,17 +47,17 @@ import os
 import tempfile
 import time
 import urllib.parse
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Any
 
-from engine.main import GraphResidentEngine
-from engine.db import LocalDB, Database
-from engine.document_manager import DocumentManager
-from engine.rag import RAGEngine
-from engine.chat import ChatManager
-from engine.analytics import Analytics
 from engine import models_manager as mm
+from engine.analytics import Analytics
+from engine.chat import ChatManager
+from engine.db import Database
+from engine.document_manager import DocumentManager
+from engine.main import GraphResidentEngine
+from engine.rag import RAGEngine
 
 logger = logging.getLogger("engine.server")
 
@@ -265,7 +265,13 @@ class EngineHandler(BaseHTTPRequestHandler):
             for filename, data, _ in files:
                 if not filename:
                     continue
-                tmp = Path(tempfile.gettempdir()) / f"lrag_{int(time.time()*1e6)}_{filename}"
+                # The multipart filename is client-supplied: reduce it to
+                # its final component (both separator styles) so it can
+                # never traverse out of the temp dir (CodeQL py/path-injection).
+                safe_filename = filename.replace("\\", "/").rsplit("/", 1)[-1]
+                if not safe_filename:
+                    continue
+                tmp = Path(tempfile.gettempdir()) / f"lrag_{int(time.time()*1e6)}_{safe_filename}"
                 tmp.write_bytes(data)
                 try:
                     result = self.doc_mgr.upload_file(str(tmp))

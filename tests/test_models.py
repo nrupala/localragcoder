@@ -3,12 +3,12 @@
 Version: 1.0.0
 """
 
-import sys
 import json
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from engine.models import GraphNode, GraphEdge, GraphDocument
+from engine.models import GraphDocument, GraphEdge, GraphNode
 
 
 def test_graph_node_defaults():
