@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 2351485 ALBERTA INC.
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 """Chat session management with streaming support.
 
 Wraps the RAG engine in a chat interface that maintains message
