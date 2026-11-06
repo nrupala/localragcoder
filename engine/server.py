@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 2351485 ALBERTA INC.
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 """Web server — exposes the RAG engine over HTTP.
 
 Binds the localRAGcoder engine to a lightweight HTTP API so the PWA
