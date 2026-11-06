@@ -7,6 +7,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 # localRAGcoder
 
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16399/badge)](https://www.bestpractices.dev/en/projects/16399)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nrupala/localragcoder/badge)](https://scorecard.dev/viewer/?uri=github.com/nrupala/localragcoder)
+[![REUSE status](https://api.reuse.software/badge/github.com/nrupala/localragcoder)](https://api.reuse.software/info/github.com/nrupala/localragcoder)
 
 **Local RAG — chat with your documents, privately.**
 
