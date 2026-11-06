@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 2351485 ALBERTA INC.
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 """RAG analytics and user analytics tracking.
 
 Tracks events, measures RAG quality, computes performance metrics,
