@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 2351485 ALBERTA INC.
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 # localRAGcoder lint gate (wired into CI 2026-11-06, remediation leg).
 # Explicit rule set so the gate means the same thing on every machine:
 #   E4/E7/E9  pycodestyle errors, F pyflakes, I import order, UP pyupgrade.
