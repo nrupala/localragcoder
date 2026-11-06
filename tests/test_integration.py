@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 2351485 ALBERTA INC.
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 """Integration tests — end-to-end pipeline using Ollama local models.
 
 Queries real LLMs from D:\\models via the Ollama API to generate content,
