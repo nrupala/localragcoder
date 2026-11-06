@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 2351485 ALBERTA INC.
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 """Command-line interface for the localRAGcoder graph engine.
 
 Provides terminal access to all engine operations:
