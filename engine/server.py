@@ -268,7 +268,7 @@ class EngineHandler(BaseHTTPRequestHandler):
                 # The multipart filename is client-supplied: reduce it to
                 # its final component (both separator styles) so it can
                 # never traverse out of the temp dir (CodeQL py/path-injection).
-                safe_filename = filename.replace("\\", "/").rsplit("/", 1)[-1]
+                safe_filename = os.path.basename(filename.replace("\\", "/"))
                 if not safe_filename:
                     continue
                 tmp = Path(tempfile.gettempdir()) / f"lrag_{int(time.time()*1e6)}_{safe_filename}"
