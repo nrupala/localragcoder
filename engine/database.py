@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 2351485 ALBERTA INC.
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 """Persistence layer for the localRAGcoder graph database.
 
 Provides a dual-backend GraphDatabase class that uses Kùzu (an embedded
